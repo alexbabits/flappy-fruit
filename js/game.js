@@ -5,7 +5,7 @@ const configurations = {
     physics: {
         default: 'arcade',
         arcade: {
-            debug: true
+            debug: false
         }
     },
     scene: {
@@ -17,7 +17,7 @@ const configurations = {
 
 const assets = {
     character: {
-        redbird: 'redbird',
+        hoa: 'hoa',
         dikbutt: 'dikbutt'
     },
     obstacle: {
@@ -58,9 +58,9 @@ const assets = {
     },
     animation: {
         character: {
-            redbird: {
-                go: 'red-go',
-                stop: 'red-stop'
+            hoa: {
+                go: 'hoa-go',
+                stop: 'hoa-stop'
             },
             dikbutt: {
                 go: 'dikbutt-go',
@@ -113,7 +113,9 @@ function preload() {
     this.load.image(assets.scoreboard.number8, 'assets/numbers/number8.png')
     this.load.image(assets.scoreboard.number9, 'assets/numbers/number9.png')
 
-    this.load.spritesheet(assets.character.redbird, 'assets/characters/red.png', {frameWidth: 34, frameHeight: 24})
+    this.load.audio('ding', 'assets/audio/ding.mp3');
+
+    this.load.spritesheet(assets.character.hoa, 'assets/characters/hoa.png', {frameWidth: 30, frameHeight: 29})
     this.load.spritesheet(assets.character.dikbutt, 'assets/characters/dikbutt.png', {frameWidth: 25, frameHeight: 31})
 }
 
@@ -138,20 +140,20 @@ function create() {
 
     upButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
 
-    // Red Animations
+    // HOA Animations
     this.anims.create({
-        key: assets.animation.character.redbird.go,
-        frames: this.anims.generateFrameNumbers(assets.character.redbird, {
+        key: assets.animation.character.hoa.go,
+        frames: this.anims.generateFrameNumbers(assets.character.hoa, {
             start: 0,
-            end: 2
+            end: 7
         }),
         frameRate: 10,
         repeat: -1
     })
     this.anims.create({
-        key: assets.animation.character.redbird.stop,
+        key: assets.animation.character.hoa.stop,
         frames: [{
-            key: assets.character.redbird,
+            key: assets.character.hoa,
             frame: 1
         }],
         frameRate: 20
@@ -162,7 +164,7 @@ function create() {
         key: assets.animation.character.dikbutt.go,
         frames: this.anims.generateFrameNumbers(assets.character.dikbutt, {
             start: 0,
-            end: 2
+            end: 11
         }),
         frameRate: 10,
         repeat: -1
@@ -176,21 +178,13 @@ function create() {
         frameRate: 20
     })
 
+    this.dingSound = this.sound.add('ding', {volume: 0.2});
+
     prepareGame(this)
 
     gameOverBanner = this.add.image(assets.scene.width, 206, assets.scene.gameOver)
     gameOverBanner.setDepth(20)
     gameOverBanner.visible = false
-    /*
-    Todo: fix scale
-    * How do I scale characters? character scaling
-    * Do I need to scale pipes/scoreboard/gaps?
-    * backgroundDay.setScale(2);
-    * backgroundNight.setScale(2);
-    * ground.setScale(2);
-    * gameOverBanner.setScale(2);
-    * introMessage.setScale(2);
-    */
 }
 
 // Update the scene frame by frame, move/rotate character and move pipes/gaps
@@ -241,11 +235,13 @@ function updatePipes() {
 }
 
 function updateBackground() {
-    if (score % 2 == 0) {
+    if (score % 10 == 0) {
         backgroundDay.visible = !backgroundDay.visible
         backgroundNight.visible = !backgroundNight.visible
     } 
     /*
+    // For future final background, after level 50
+    // Make it golden or something
     else if (score > 49) {
         backgroundDay.visible = false
         backgroundNight.visible = false
@@ -256,6 +252,7 @@ function updateBackground() {
 
 function updateScore(_, gap) {
     score++
+    this.dingSound.play();
     gap.destroy()
 
     updatePipes()
@@ -282,23 +279,23 @@ function flapCharacter() {
     }
     if (!gameStarted) startGame(game.scene.scenes[0]);
 
-    player.setVelocityY(-350)
+    player.setVelocityY(-380)
     player.angle = -20
-    framesMoveUp = 7
+    framesMoveUp = 6
 }
 
 function getRandomCharacter() {
     rng = Phaser.Math.Between(0, 1)
     if (rng == 0) {
-        return assets.character.redbird;
+        return assets.character.hoa;
     } else {
         return assets.character.dikbutt;
     }
 }
 
 function getCharacterAnimation(character) {
-    if (character === assets.character.redbird) {
-        return assets.animation.character.redbird;
+    if (character === assets.character.hoa) {
+        return assets.animation.character.hoa;
     } else {
         return assets.animation.character.dikbutt;
     }
@@ -335,7 +332,7 @@ function restartGame() {
     gameScene.physics.resume()
 }
 
-// Restart all variable and configurations, show main and recreate the character.
+// Prepare game to be played
 function prepareGame(scene) {
     framesMoveUp = 0
     nextPipes = 0
@@ -348,7 +345,7 @@ function prepareGame(scene) {
 
     character = getRandomCharacter()
     player = scene.physics.add.sprite(55, 245, character)
-    //player.setScale(2); @audit to-do
+    player.setScale(1.1);
     player.setCollideWorldBounds(true)
     player.anims.play(getCharacterAnimation(character).go, true)
 
